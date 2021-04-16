@@ -1,8 +1,8 @@
 <template>
 <div class="mt-5 w-2/4 mx-auto pb-4">
   <div class="flex flex-col">
-    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-      <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+    <div class="-my-2 sm:-mx-6 lg:-mx-8">
+      <div class="py-2 align-middle inline-block min-w-full">
         <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
           <table class="min-w-full divide-y divide-gray-200 ">
             <thead class="bg-gray-50">
@@ -42,7 +42,7 @@
 
                   <td class="px-6 py-4 whitespace-nowrap text-center">
                     <span class="px-2 py-1 inline-flex text-gray-500" :class="changeColorOfResult(elem.resultOfTheBet-elem.betPlayed)" >
-                      {{elem.resultOfTheBet-elem.betPlayed>0 ? `+${elem.resultOfTheBet-elem.betPlayed}` : elem.resultOfTheBet-elem.betPlayed}}
+                      {{ elem.resultOfTheBet-elem.betPlayed > 0 ? `+${elem.resultOfTheBet-elem.betPlayed}` : elem.resultOfTheBet-elem.betPlayed}}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -50,8 +50,8 @@
                   </td>
                 </tr>
 
-                <!-- More items... -->
               </tbody>
+              <!-- <StatsDay :bets='bets'></StatsDay> -->
 
           </table>
         </div>
@@ -64,9 +64,24 @@
       <input v-model="bet.resultOfTheBet" type="text" class="border w-40 text-center mt-5" placeholder="Montant gagné">
       <button @click="addToBets" class="button-add border p-2 mt-5 bg-gray-600 border-gray-400 text-white" :class="{'bg-yellow-300 border-yellow-500 text-green-800': bet.Played!==null && bet.resultOfTheBet!==null}">Ajouter</button>
     </div>
+
+    <div>
+      <StatsDay
+        :bets="bets" 
+        :numberOfDayPlayed="numberOfDayPlayed" 
+        :mountOfBetPlayed="mountOfBetPlayed" :mountOfResultOfTheBet="mountOfResultOfTheBet"
+        :finalResult="finalResult"
+        :betByDay="betByDay"
+        :betWinByDay="betWinByDay"
+        :resultByDay="resultByDay"
+        :reducer="reducer"
+        :changeColorOfResult="changeColorOfResult"
+        ></StatsDay>
+    </div>
     <!-- <div>
       <Bankroll></Bankroll>
     </div> -->
+
 
   </div>
 </div>
@@ -74,7 +89,7 @@
 
 <script>
 // import Bankroll from '../Bankroll/Bankroll'
-// import StatsDay from './StatsDay';
+import StatsDay from './StatsDay';
 // import StatsMonth from './StatsMonth';
 // import StatsYear from './StatsYear';
 
@@ -88,29 +103,68 @@ export default {
         betPlayed: null,
         resultOfTheBet: null,
       },
-      bets: []
+      bets: [],
+      numberOfDayPlayed: 0,
+      mountOfBetPlayed: [],
+      mountOfResultOfTheBet: [],
+      finalResult: [],
+      betByDay: null,
+      betWinByDay: null,
+      resultByDay: null,
     }
   },
   methods: {
+    reducer(accumulator, currentValue) {
+      return accumulator + currentValue
+    },
+
     addToBets() {
 
-      const tempBet = {...this.bet};
+      const tempBet = {...this.bet}
+      const tempMountOfBetPlayed = [...this.mountOfBetPlayed]
+      const tempFinalResult = [...this.finalResult]
+      const tempMountOfResultOfTheBet = [...this.mountOfResultOfTheBet]
 
       if(tempBet.betPlayed !== null && tempBet.resultOfTheBet !== null){
 
-        const date = new Date();
-        tempBet.date = date.toLocaleDateString();
-        tempBet.hour = date.toLocaleTimeString();
+        const dayIsInBets = (day) => {
+            return day.date === tempBet.date
+        }
 
-        this.bets = [...this.bets, tempBet];
-        this.bet.betPlayed = null;
-        this.bet.resultOfTheBet = null;
+        const date = new Date()
+        tempBet.date = date.toLocaleDateString()
+        tempBet.hour = date.toLocaleTimeString()
+
+        tempMountOfBetPlayed.push(parseFloat(tempBet.betPlayed))
+        this.mountOfBetPlayed = tempMountOfBetPlayed
+
+        const result = tempBet.resultOfTheBet - tempBet.betPlayed
+        tempFinalResult.push(parseFloat(result))
+        this.finalResult = tempFinalResult
+
+        tempMountOfResultOfTheBet.push(parseFloat(tempBet.resultOfTheBet))
+        this.mountOfResultOfTheBet = tempMountOfResultOfTheBet
+
+        this.bets.find(dayIsInBets) ? this.numberOfDayPlayed : this.numberOfDayPlayed++
+
+        const betByDay = this.mountOfBetPlayed.reduce(this.reducer) / this.numberOfDayPlayed
+        const betWinByDay = this.mountOfResultOfTheBet.reduce(this.reducer) / this.numberOfDayPlayed
+        const resultByDay = betWinByDay - betByDay
+
+        this.betByDay = betByDay
+        this.betWinByDay = betWinByDay
+        this.resultByDay = resultByDay
+
+        this.bets = [...this.bets, tempBet]
+        this.bet.betPlayed = null
+        this.bet.resultOfTheBet = null
+        
       }
     },
     deleteBetToList(index) {
       const tempBets = [...this.bets];
-      tempBets.splice(index, 1);
-      this.bets = tempBets;
+      tempBets.splice(index, 1)
+      this.bets = tempBets
     },
     changeColorOfResult(value) {
       if(value < 0) {
@@ -125,7 +179,7 @@ export default {
     }
   },
   components: {
-      // StatsDay,
+      StatsDay,
       // StatsMonth,
       // StatsYear,
       // Bankroll
