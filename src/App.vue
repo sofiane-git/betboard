@@ -1,7 +1,7 @@
 <template>
 
-  <div id="app" class="bg-yellow-600 flex justify-center items-center p-3 h-screen">
-    <div class="relative bg-white h-full w-full overflow-y-scroll inner">
+  <div id="app" class="bg-yellow-600 flex justify-center items-center h-screen sm:p-1 lg:p-2">
+    <div class="relative bg-white h-full w-full overflow-y-scroll inner px-2">
       <TheHeader></TheHeader>
       <!-- <div class="flex"> -->
         <Stats></Stats>
